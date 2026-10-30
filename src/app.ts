@@ -24,13 +24,6 @@ app.get("/", (_req, res) => {
   });
 });
 
-app.get("/api/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "FixItNow API is running",
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-  });
-});
+
 
 export default app;
