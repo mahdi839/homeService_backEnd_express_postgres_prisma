@@ -9,6 +9,11 @@ async function main() {
     console.log(`🚀 Server running on http://localhost:${env.PORT}`);
   });
 }
+main().catch(async(err)=>{
+ console.error("❌ Failed to start server:", err);
+  await prisma.$disconnect();
+  process.exit(1);
+})
 
 
 
