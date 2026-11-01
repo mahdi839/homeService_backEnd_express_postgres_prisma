@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { env } from "./config/env.js";
 import { sendResponse } from "./utils/sendResponse.js";
+import { notFound } from "./middlewares/notFound.js";
 
 const app = express();
 
@@ -27,5 +28,5 @@ app.get("/", (_req, res) => {
 });
 
 
-
+app.use(notFound)
 export default app;
