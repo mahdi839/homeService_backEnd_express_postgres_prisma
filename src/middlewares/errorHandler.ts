@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ApiError } from "../utils/ApiError.js";
 import { env } from "../config/env.js";
+import { ZodError } from "zod";
 
 export const errorHandler = (
   err: unknown,
@@ -16,6 +17,19 @@ export const errorHandler = (
       errorDetails: err.errorDetails,
     });
   }
+
+    // 2. Validation errors from Zod → 400 with a list of wrong fields
+  if (err instanceof ZodError) {
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errorDetails: err.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      })),
+    });
+  }
+
 
   // 2. Anything else is an unexpected bug → 500
   console.error(err);
