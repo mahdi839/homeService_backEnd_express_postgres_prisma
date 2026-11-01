@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { env } from "./config/env.js";
+import { sendResponse } from "./utils/sendResponse.js";
 
 const app = express();
 
@@ -18,10 +19,11 @@ if (env.NODE_ENV === "development") {
 app.use(express.json());
 
 app.get("/", (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "FixItNow API is running",
-  });
+  // res.status(200).json({
+  //   success: true,
+  //   message: "FixItNow API is running",
+  // });
+  sendResponse(res,{statusCode:200,message:"FixItNow Running"})
 });
 
 
