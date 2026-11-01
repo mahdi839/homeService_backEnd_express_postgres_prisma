@@ -5,6 +5,7 @@ import morgan from "morgan";
 import { env } from "./config/env.js";
 import { sendResponse } from "./utils/sendResponse.js";
 import { notFound } from "./middlewares/notFound.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
 
@@ -28,5 +29,6 @@ app.get("/", (_req, res) => {
 });
 
 
-app.use(notFound)
+app.use(notFound);
+app.use(errorHandler);
 export default app;
