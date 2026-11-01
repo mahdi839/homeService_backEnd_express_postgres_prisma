@@ -7,7 +7,7 @@ type ResponseData<T>={
    meta?:unknown
 }
 
-export const sendResponse = <t>(res:Response,payload:ResponseData<t>)=>{
+export const sendResponse = <T>(res:Response,payload:ResponseData<T>)=>{
     res.status(payload.statusCode).json({
         success: true,
         message: payload.message,
