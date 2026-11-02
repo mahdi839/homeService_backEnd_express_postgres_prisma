@@ -6,7 +6,7 @@ import { env } from "./config/env.js";
 import { sendResponse } from "./utils/sendResponse.js";
 import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
-
+import authRouter from './modules/auth/auth.route.js'
 const app = express();
 
 app.use(helmet());
@@ -28,7 +28,7 @@ app.get("/", (_req, res) => {
   sendResponse(res,{statusCode:200,message:"FixItNow Running"})
 });
 
-
+app.use("/api/auth",authRouter)
 app.use(notFound);
 app.use(errorHandler);
 export default app;
