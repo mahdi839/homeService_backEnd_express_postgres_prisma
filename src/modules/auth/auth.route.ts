@@ -50,6 +50,8 @@ const loginSchema = z.object({
     password: z.string().min(1)
 })
 
+// login api started from here-------------
+
 router.post("/login", validate(loginSchema), async (req, res) => {
     const { email, password } = req.body as z.infer<typeof loginSchema>;
 
