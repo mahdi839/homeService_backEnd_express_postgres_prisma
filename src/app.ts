@@ -25,10 +25,10 @@ app.get("/", (_req, res) => {
   //   success: true,
   //   message: "FixItNow API is running",
   // });
-  sendResponse(res,{statusCode:200,message:"FixItNow Running"})
+  sendResponse(res, { statusCode: 200, message: "FixItNow Running" })
 });
 
-app.use("/api/auth",authRouter)
+app.use("/api/auth", authRouter)
 app.use(notFound);
 app.use(errorHandler);
 export default app;
