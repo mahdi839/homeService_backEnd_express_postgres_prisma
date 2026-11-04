@@ -16,15 +16,9 @@ if (env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// NOTE: the Stripe webhook route must be registered BEFORE express.json(),
-// because it needs the raw request body to verify the signature.
 app.use(express.json());
 
 app.get("/", (_req, res) => {
-  // res.status(200).json({
-  //   success: true,
-  //   message: "FixItNow API is running",
-  // });
   sendResponse(res, { statusCode: 200, message: "FixItNow Running" })
 });
 
