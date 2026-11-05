@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 
-export const auth = (...allowdRoles: Role[]) =>
+export const auth = (...allowedRoles: Role[]) =>
     async (req: Request, res: Response, next: NextFunction) => {
         const header = req.headers.authorization;
         if (!header?.startsWith("Bearer ")) {
@@ -22,7 +22,7 @@ export const auth = (...allowdRoles: Role[]) =>
             throw new ApiError(401, "Invalid or expired token");
         }
 
-        const user = await prisma.user.findUniqueOrThrow(
+        const user = await prisma.user.findUnique(
             { where: { id: payload.id } });
         if (!user) {
             throw new ApiError(401, "User no longer exist")
@@ -32,7 +32,7 @@ export const auth = (...allowdRoles: Role[]) =>
             throw new ApiError(403, "Your account has been banned");
         }
 
-        if (allowdRoles.length > 0 && !allowdRoles.includes(user.role)) {
+        if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
             throw new ApiError(403, "You do not have right permission")
         }
 
