@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import z from "zod";
 import { validate } from "../../middlewares/validate.js";
 import { prisma } from "../../config/prisma.js";
@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { env } from "../../config/env.js";
 import  jwt from "jsonwebtoken";
+import { auth } from "../../middlewares/auth.js";
 
 
 const router = Router();
@@ -77,6 +78,18 @@ router.post("/login", validate(loginSchema), async (req, res) => {
         data: {token,user: userWithoutPassword}
     })
 
+})
+
+router.get("/me",auth(),async(req,res)=>{
+   const user = await prisma.user.findUniqueOrThrow(
+     {
+        where:{
+            id:req.user!.id},
+        omit:{password:true}
+     }
+   );
+
+   sendResponse(res,{statusCode:200,message:"current User",data:user});
 })
 
 export default router;

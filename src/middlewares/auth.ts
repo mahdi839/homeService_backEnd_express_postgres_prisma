@@ -15,26 +15,27 @@ export const auth = (...allowdRoles: Role[]) =>
         const token = header.slice(7);
 
         // varify the token
-        let payload: {id:string,role:Role};
-        try{
-            payload = jwt.verify(token,env.JWT_SECRET) as {id:string,role:Role}
-        }catch{
-            throw new ApiError(401,"Invalid or expired token");
+        let payload: { id: string, role: Role };
+        try {
+            payload = jwt.verify(token, env.JWT_SECRET) as { id: string, role: Role }
+        } catch {
+            throw new ApiError(401, "Invalid or expired token");
         }
 
-        const user = await prisma.user.findFirstOrThrow({where:{id:payload.id}});
-        if(!user){
-            throw new ApiError(401,"User no longer exist")
+        const user = await prisma.user.findUniqueOrThrow(
+            { where: { id: payload.id } });
+        if (!user) {
+            throw new ApiError(401, "User no longer exist")
         }
 
-        if(user.status === "BANNED"){
-            throw new ApiError(403,"Your account has been banned");
+        if (user.status === "BANNED") {
+            throw new ApiError(403, "Your account has been banned");
         }
 
-        if(allowdRoles.length>0 && !allowdRoles.includes(user.role)){
-            throw new ApiError(403,"You do not have right permission")
+        if (allowdRoles.length > 0 && !allowdRoles.includes(user.role)) {
+            throw new ApiError(403, "You do not have right permission")
         }
 
-        req.user = {id:user.id,role:user.role};
+        req.user = { id: user.id, role: user.role };
         next();
     }
