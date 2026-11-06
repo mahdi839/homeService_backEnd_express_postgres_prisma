@@ -44,7 +44,7 @@ model TechnicianProfile {
   id              String   @id @default(ulid())
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio             String
+  bio             String?
   skills          String[]
   experienceYears Int      @default(0)
   location        String?
