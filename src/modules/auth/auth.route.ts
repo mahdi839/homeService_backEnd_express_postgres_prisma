@@ -38,8 +38,16 @@ router.post("/register", validate(registerSchema), async (req, res) => {
 
     // save the user
     const user = await prisma.user.create({
-        data: { name, email, password: hashedPassword, phone, role },
+        data: {
+             name, 
+             email, 
+             password: hashedPassword, 
+             phone, 
+             role,
+             ...(role === "TECHNICIAN"&& {technicianProfile: {create:{}}})
+            },
         omit: { password: true },
+        include: {technicianProfile:true}
     });
 
     sendResponse(res, { statusCode: 201, message: "user registered", data: user });
