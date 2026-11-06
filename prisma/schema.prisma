@@ -19,15 +19,16 @@ enum UserStatus {
 }
 
 model User {
-  id        String     @id @default(uuid())
-  name      String
-  email     String     @unique
-  password  String
-  phone     String?
-  role      Role       @default(CUSTOMER)
-  status    UserStatus @default(ACTIVE)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id                String             @id @default(uuid())
+  name              String
+  email             String             @unique
+  password          String
+  phone             String?
+  role              Role               @default(CUSTOMER)
+  status            UserStatus         @default(ACTIVE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  technicianProfile TechnicianProfile?
 }
 
 model Category {
@@ -37,4 +38,19 @@ model Category {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model TechnicianProfile {
+  id              String   @id @default(ulid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio             String
+  skills          String[]
+  experienceYears Int      @default(0)
+  location        String?
+  avgRating       Float    @default(0)
+  reviewCount     Int      @default(0)
+  isAvailable     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
