@@ -8,6 +8,7 @@ import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import authRouter from './modules/auth/auth.route.js'
 import categoryRouter from './modules/category/category.route.js'
+import technicianRouter from './modules/technician/technician.route.js'
 const app = express();
 
 app.use(helmet());
@@ -25,6 +26,7 @@ app.get("/", (_req, res) => {
 
 app.use("/api/auth", authRouter)
 app.use("/api/categories", categoryRouter)
+app.use("/api/technician",technicianRouter)
 app.use(notFound);
 app.use(errorHandler);
 export default app;
