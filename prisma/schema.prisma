@@ -36,6 +36,7 @@ model Category {
   name        String   @unique
   description String?
   isActive    Boolean  @default(true)
+  services Service[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -51,6 +52,26 @@ model TechnicianProfile {
   avgRating       Float    @default(0)
   reviewCount     Int      @default(0)
   isAvailable     Boolean  @default(true)
+  services Service[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model Service {
+  id              String            @id @default(ulid())
+  technicianId    String
+  technician      TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  categoryId      String
+  category        Category          @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  title           String
+  description     String?
+  price           Decimal           @db.Decimal(10, 2)
+  durationMinutes Int               @default(60)
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([technicianId])
+  @@index([categoryId])
+}
+
