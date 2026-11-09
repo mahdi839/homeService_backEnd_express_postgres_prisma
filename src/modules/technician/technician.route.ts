@@ -29,6 +29,24 @@ const createServiceSchema = z.object({
 
 const updateServiceSchema = createServiceSchema.partial();
 
+const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/; // "00:00" to "23:59"
+
+const slotSchema = z
+    .object({
+        dayOfWeek: z.number().int().min(0).max(6),
+        startTime: z.string().regex(timeRegex, "Time must be HH:mm"),
+        endTime: z.string().regex(timeRegex, "Time must be HH:mm"),
+    })
+    .refine((slot) => slot.startTime < slot.endTime, {
+        message: "endTime must be after startTime",
+        path: ["endTime"],
+    });
+
+
+const availabilitySchema = z.object({
+    slots: z.array(slotSchema).max(50),
+});
+
 router.get("/profile", auth("TECHNICIAN"), async (req, res) => {
     const profile = await prisma.technicianProfile.findUnique({
         where: { userId: req.user!.id },
@@ -129,6 +147,53 @@ router.delete("/services/:id", auth("TECHNICIAN"), async (req, res) => {
     });
 
     sendResponse(res, { statusCode: 200, message: "Service deleted" });
+});
+
+// GET /api/technician/availability → my weekly schedule
+router.get("/availability", auth("TECHNICIAN"), async (req, res) => {
+    const slots = await prisma.availabilitySlot.findMany({
+        where: { technician: { userId: req.user!.id } },
+        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
+    });
+
+    sendResponse(res, { statusCode: 200, message: "Availability fetched", data: slots });
+});
+
+// PUT /api/technician/availability → replace my whole weekly schedule
+router.put("/availability", auth("TECHNICIAN"), validate(availabilitySchema), async (req, res) => {
+    const { slots } = req.body as z.infer<typeof availabilitySchema>;
+
+    const profile = await prisma.technicianProfile.findUnique({ where: { userId: req.user!.id } });
+    if (!profile) {
+        throw new ApiError(404, "Technician profile not found");
+    }
+
+    // Overlap check: sort by day + start, then compare each slot with the previous one
+    const sorted = [...slots].sort(
+        (a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime),
+    );
+    for (let i = 1; i < sorted.length; i++) {
+        const prev = sorted[i - 1]!;
+        const curr = sorted[i]!;
+        if (prev.dayOfWeek === curr.dayOfWeek && curr.startTime < prev.endTime) {
+            throw new ApiError(400, `Overlapping slots on day ${curr.dayOfWeek}`);
+        }
+    }
+
+    // Replace: delete old slots + create new ones, all-or-nothing
+    await prisma.$transaction([
+        prisma.availabilitySlot.deleteMany({ where: { technicianId: profile.id } }),
+        prisma.availabilitySlot.createMany({
+            data: slots.map((slot) => ({ ...slot, technicianId: profile.id })),
+        }),
+    ]);
+
+    const saved = await prisma.availabilitySlot.findMany({
+        where: { technicianId: profile.id },
+        orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }],
+    });
+
+    sendResponse(res, { statusCode: 200, message: "Availability updated", data: saved });
 });
 
 export default router;

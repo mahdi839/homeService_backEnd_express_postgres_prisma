@@ -32,29 +32,30 @@ model User {
 }
 
 model Category {
-  id          String   @id @default(ulid())
-  name        String   @unique
+  id          String    @id @default(ulid())
+  name        String    @unique
   description String?
-  isActive    Boolean  @default(true)
-  services Service[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive    Boolean   @default(true)
+  services    Service[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model TechnicianProfile {
-  id              String   @id @default(ulid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio             String?
-  skills          String[]
-  experienceYears Int      @default(0)
-  location        String?
-  avgRating       Float    @default(0)
-  reviewCount     Int      @default(0)
-  isAvailable     Boolean  @default(true)
-  services Service[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String             @id @default(ulid())
+  userId            String             @unique
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio               String?
+  skills            String[]
+  experienceYears   Int                @default(0)
+  location          String?
+  avgRating         Float              @default(0)
+  reviewCount       Int                @default(0)
+  isAvailable       Boolean            @default(true)
+  services          Service[]
+  availabilitySlots AvailabilitySlot[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Service {
@@ -75,3 +76,15 @@ model Service {
   @@index([categoryId])
 }
 
+model AvailabilitySlot {
+  id           String            @id @default(ulid())
+  technicianId String
+  technician   TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int // 0 = Sunday ... 6 = Saturday
+  startTime    String // "HH:mm", e.g. "09:00"
+  endTime      String // "HH:mm", e.g. "17:00"
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([technicianId, dayOfWeek, startTime])
+}
