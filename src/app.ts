@@ -10,6 +10,7 @@ import authRouter from './modules/auth/auth.route.js'
 import categoryRouter from './modules/category/category.route.js'
 import technicianRouter from './modules/technician/technician.route.js'
 import technicianPublicRouter from './modules/technician/technician.public.route.js'
+import serviceRouter from "./modules/service/service.route.js";
 const app = express();
 
 app.use(helmet());
@@ -27,8 +28,9 @@ app.get("/", (_req, res) => {
 
 app.use("/api/auth", authRouter)
 app.use("/api/categories", categoryRouter)
-app.use("/api/technician",technicianRouter)
+app.use("/api/technician", technicianRouter)
 app.use("/api/technicians", technicianPublicRouter);
+app.use("/api/services", serviceRouter);
 app.use(notFound);
 app.use(errorHandler);
 export default app;
