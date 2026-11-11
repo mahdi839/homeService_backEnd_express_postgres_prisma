@@ -26,6 +26,7 @@ model User {
   phone             String?
   role              Role               @default(CUSTOMER)
   status            UserStatus         @default(ACTIVE)
+  bookings          Booking[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   technicianProfile TechnicianProfile?
@@ -54,8 +55,9 @@ model TechnicianProfile {
   isAvailable       Boolean            @default(true)
   services          Service[]
   availabilitySlots AvailabilitySlot[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  bookings          Booking[]
 }
 
 model Service {
@@ -71,6 +73,7 @@ model Service {
   isActive        Boolean           @default(true)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  bookings        Booking[]
 
   @@index([technicianId])
   @@index([categoryId])
@@ -87,4 +90,36 @@ model AvailabilitySlot {
   updatedAt    DateTime          @updatedAt
 
   @@unique([technicianId, dayOfWeek, startTime])
+}
+
+enum BookingStatus {
+  REQUESTED
+  ACCEPTED
+  DECLINED
+  PAID
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Booking {
+  id             String            @id @default(ulid())
+  customerId     String
+  customer       User              @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  technicianId   String
+  technician     TechnicianProfile @relation(fields: [technicianId], references: [id], onDelete: Restrict)
+  serviceId      String
+  service        Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  address        String
+  notes          String?
+  price          Decimal           @db.Decimal(10, 2)
+  status         BookingStatus     @default(REQUESTED)
+  cancelReason   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([customerId])
+  @@index([technicianId, status])
 }
