@@ -126,4 +126,27 @@ router.get("/", auth(), async (req, res) => {
   sendResponse(res, { statusCode: 200, message: "Bookings fetched", data: bookings });
 });
 
+router.get("/:id",auth(),async(req,res)=>{
+   const bookingId = req.params.id as string;
+   const {id,role} = req.user!;
+
+   const booking = await prisma.booking.findFirst({
+     where:{
+        id:bookingId,
+        ...(role==='CUSTOMER'&& {customerId:id}),
+        ...(role==='TECHNICIAN' && {technician:{userId:id}}),
+     },
+     include:{
+       service:{include:{category:{select:{name:true}}}},
+       customer: {select:{name:true,phone:true,email:true}},
+       technician:{select:{user:{select:{name:true,phone:true}}}}
+     }
+   })
+
+   if(!booking){
+     throw new ApiError(404,"Booking not found")
+   }
+   sendResponse(res,{statusCode:200,message:"Booking fetched",data:booking})
+})
+
 export default router;
