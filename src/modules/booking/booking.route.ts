@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { z } from "zod";
+import { includes, z } from "zod";
 import { auth } from "../../middlewares/auth.js";
 import { validate } from "../../middlewares/validate.js";
 import { prisma } from "../../config/prisma.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { ApiError } from "../../utils/ApiError.js";
+import { title } from "node:process";
 
 const router = Router();
 
@@ -98,6 +99,31 @@ router.post("/", auth("CUSTOMER"), validate(createBookingSchema), async (req, re
   });
 
   sendResponse(res, { statusCode: 201, message: "Booking requested", data: booking });
+});
+
+const listBookingsQuery = z.object({
+  status: z.enum(["REQUESTED", "ACCEPTED", "DECLINED", "PAID", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).optional()
+});
+
+router.get("/", auth(), async (req, res) => {
+  const { status } = listBookingsQuery.parse(req.query);
+  const { id, role } = req.user!;
+
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status,
+      ...(role === "CUSTOMER" && { customerId: id }),
+      ...(role === "TECHNICIAN" && { technician: { userId: id } }),
+    },
+    include: {
+      service: { select: { title: true } },
+      customer: { select: { name: true, phone: true } },
+      technician: { select: { user: { select: { name: true, phone: true } } } },
+    },
+    orderBy: { scheduledStart: "desc" },
+  });
+
+  sendResponse(res, { statusCode: 200, message: "Bookings fetched", data: bookings });
 });
 
 export default router;
