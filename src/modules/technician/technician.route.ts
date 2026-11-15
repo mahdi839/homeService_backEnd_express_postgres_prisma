@@ -5,6 +5,7 @@ import { prisma } from "../../config/prisma.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { validate } from "../../middlewares/validate.js";
 import { ApiError } from "../../utils/ApiError.js";
+import type { BookingStatus } from "../../generated/prisma/enums.js";
 
 
 
@@ -195,5 +196,40 @@ router.put("/availability", auth("TECHNICIAN"), validate(availabilitySchema), as
 
     sendResponse(res, { statusCode: 200, message: "Availability updated", data: saved });
 });
+
+const technicianTransitions: Partial<Record<BookingStatus, BookingStatus[]>> = {
+    REQUESTED: ["ACCEPTED", 'DECLINED'],
+    PAID: ['IN_PROGRESS'],
+    IN_PROGRESS: ['COMPLETED']
+}
+
+const updateBookStatusSchema = z.object({
+    status: z.enum(["ACCEPTED", "DECLINED", "IN_PROGRESS", "COMPLETED"])
+})
+
+router.patch("/bookings/:id", auth('TECHNICIAN'), validate(updateBookStatusSchema), async (req, res) => {
+    const bookingId = req.params.id as string;
+    const { status } = req.body as z.infer<typeof updateBookStatusSchema>;
+
+    const booking = await prisma.booking.findFirst({
+        where: { id: bookingId, technician: { userId: req.user!.id } }
+    })
+
+    if (!booking) {
+        throw new ApiError(404, "Booking not found")
+    }
+
+    const allowed = technicianTransitions[booking.status] ?? [];
+    if (!allowed.includes(status)) {
+        throw new ApiError(400, `Cannot change booking from ${booking.status} to ${status}`)
+    }
+
+    const updated = await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status },
+    })
+
+    sendResponse(res, { statusCode: 200, message: `Booking ${status.toLowerCase()}`, data: updated });
+})
 
 export default router;
