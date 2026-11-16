@@ -201,17 +201,19 @@ router.patch("/:id/cancel", auth("CUSTOMER"), validate(cancelBookingSchema), asy
   if (!booking) {
     throw new ApiError(404, "Booking not found")
   }
-  
-  if(!CANCELLABLE_STATUSES.includes(booking.status)){
-    throw new ApiError(400,`Cannot cancel booking that is ${booking.status}`)
+
+  if (!CANCELLABLE_STATUSES.includes(booking.status)) {
+    throw new ApiError(400, `Cannot cancel booking that is ${booking.status}`)
   };
 
+  // TODO (Stripe): if booking.status === "PAID", refund the payment here
+
   const cancelled = await prisma.booking.update({
-    where:{id:bookingId},
-    data:{status:'CANCELLED',cancelReason: reason}
+    where: { id: bookingId },
+    data: { status: 'CANCELLED', cancelReason: reason }
   });
 
-  sendResponse(res,{statusCode:200,message:"Booking Cancelled",data:cancelled})
+  sendResponse(res, { statusCode: 200, message: "Booking Cancelled", data: cancelled })
 })
 
 export default router;
