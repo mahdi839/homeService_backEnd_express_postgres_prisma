@@ -184,6 +184,34 @@ router.patch("/bookings/:id", auth('TECHNICIAN'), validate(updateBookStatusSchem
   sendResponse(res, { statusCode: 200, message: `Booking ${status.toLowerCase()}`, data: updated });
 });
 
+const cancelBookingSchema = z.object({
+  reason: z.string().max(500).optional(),
+})
 
+const CANCELLABLE_STATUSES = ["REQUESTED", "ACCEPTED", "PAID"];
+
+router.patch("/:id/cancel", auth("CUSTOMER"), validate(cancelBookingSchema), async (req, res) => {
+  const bookingId = req.params.id as string;
+  const { reason } = req.body as z.infer<typeof cancelBookingSchema>;
+
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, customerId: req.user!.id }
+  });
+
+  if (!booking) {
+    throw new ApiError(404, "Booking not found")
+  }
+  
+  if(!CANCELLABLE_STATUSES.includes(booking.status)){
+    throw new ApiError(400,`Cannot cancel booking that is ${booking.status}`)
+  };
+
+  const cancelled = await prisma.booking.update({
+    where:{id:bookingId},
+    data:{status:'CANCELLED',cancelReason: reason}
+  });
+
+  sendResponse(res,{statusCode:200,message:"Booking Cancelled",data:cancelled})
+})
 
 export default router;
