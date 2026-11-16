@@ -6,7 +6,7 @@ import { prisma } from "../../config/prisma.js";
 import { sendResponse } from "../../utils/sendResponse.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { title } from "node:process";
-
+import type { BookingStatus } from "../../generated/prisma/enums.js";
 const router = Router();
 
 // Business time zone: Bangladesh = UTC+6 (no daylight saving)
@@ -126,27 +126,64 @@ router.get("/", auth(), async (req, res) => {
   sendResponse(res, { statusCode: 200, message: "Bookings fetched", data: bookings });
 });
 
-router.get("/:id",auth(),async(req,res)=>{
-   const bookingId = req.params.id as string;
-   const {id,role} = req.user!;
+router.get("/:id", auth(), async (req, res) => {
+  const bookingId = req.params.id as string;
+  const { id, role } = req.user!;
 
-   const booking = await prisma.booking.findFirst({
-     where:{
-        id:bookingId,
-        ...(role==='CUSTOMER'&& {customerId:id}),
-        ...(role==='TECHNICIAN' && {technician:{userId:id}}),
-     },
-     include:{
-       service:{include:{category:{select:{name:true}}}},
-       customer: {select:{name:true,phone:true,email:true}},
-       technician:{select:{user:{select:{name:true,phone:true}}}}
-     }
-   })
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      ...(role === 'CUSTOMER' && { customerId: id }),
+      ...(role === 'TECHNICIAN' && { technician: { userId: id } }),
+    },
+    include: {
+      service: { include: { category: { select: { name: true } } } },
+      customer: { select: { name: true, phone: true, email: true } },
+      technician: { select: { user: { select: { name: true, phone: true } } } }
+    }
+  })
 
-   if(!booking){
-     throw new ApiError(404,"Booking not found")
-   }
-   sendResponse(res,{statusCode:200,message:"Booking fetched",data:booking})
+  if (!booking) {
+    throw new ApiError(404, "Booking not found")
+  }
+  sendResponse(res, { statusCode: 200, message: "Booking fetched", data: booking })
 })
+
+const technicianTransitions: Partial<Record<BookingStatus, BookingStatus[]>> = {
+  REQUESTED: ["ACCEPTED", 'DECLINED'],
+  PAID: ['IN_PROGRESS'],
+  IN_PROGRESS: ['COMPLETED']
+}
+
+const updateBookStatusSchema = z.object({
+  status: z.enum(["ACCEPTED", "DECLINED", "IN_PROGRESS", "COMPLETED"])
+})
+
+router.patch("/bookings/:id", auth('TECHNICIAN'), validate(updateBookStatusSchema), async (req, res) => {
+  const bookingId = req.params.id as string;
+  const { status } = req.body as z.infer<typeof updateBookStatusSchema>;
+
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, technician: { userId: req.user!.id } }
+  })
+
+  if (!booking) {
+    throw new ApiError(404, "Booking not found")
+  }
+
+  const allowed = technicianTransitions[booking.status] ?? [];
+  if (!allowed.includes(status)) {
+    throw new ApiError(400, `Cannot change booking from ${booking.status} to ${status}`)
+  }
+
+  const updated = await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status },
+  })
+
+  sendResponse(res, { statusCode: 200, message: `Booking ${status.toLowerCase()}`, data: updated });
+});
+
+
 
 export default router;
