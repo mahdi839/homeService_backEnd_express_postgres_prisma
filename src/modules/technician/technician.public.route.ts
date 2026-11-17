@@ -67,6 +67,11 @@ router.get("/:id", async (req, res) => {
       user: { select: { id: true, name: true } },
       services: { where: { isActive: true }, include: { category: true } },
       availabilitySlots: { orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }] },
+      reviews: {
+        include: { customer: { select: { name: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      },
     },
   });
 

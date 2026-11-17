@@ -12,6 +12,7 @@ import technicianRouter from './modules/technician/technician.route.js'
 import technicianPublicRouter from './modules/technician/technician.public.route.js'
 import serviceRouter from "./modules/service/service.route.js";
 import bookingRouter from "./modules/booking/booking.route.js";
+import reviewRouter from "./modules/review/review.route.js";
 const app = express();
 
 app.use(helmet());
@@ -33,6 +34,8 @@ app.use("/api/technician", technicianRouter)
 app.use("/api/technicians", technicianPublicRouter);
 app.use("/api/services", serviceRouter);
 app.use("/api/bookings", bookingRouter);
+app.use("/api/reviews", reviewRouter);
+
 
 app.use(notFound);
 app.use(errorHandler);
