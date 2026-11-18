@@ -159,7 +159,7 @@ const updateBookStatusSchema = z.object({
   status: z.enum(["ACCEPTED", "DECLINED", "IN_PROGRESS", "COMPLETED"])
 })
 
-router.patch("/bookings/:id", auth('TECHNICIAN'), validate(updateBookStatusSchema), async (req, res) => {
+router.patch("/:id", auth('TECHNICIAN'), validate(updateBookStatusSchema), async (req, res) => {
   const bookingId = req.params.id as string;
   const { status } = req.body as z.infer<typeof updateBookStatusSchema>;
 
